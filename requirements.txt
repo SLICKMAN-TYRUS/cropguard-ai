@@ -2,7 +2,7 @@
 # Install: pip install -r requirements.txt
 
 # Deep learning
-tensorflow==2.15.0
+tensorflow==2.18.0
 
 # Data & ML
 numpy>=1.24,<2.0
