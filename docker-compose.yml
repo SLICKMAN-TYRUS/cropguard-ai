@@ -1,0 +1,93 @@
+version: "3.9"
+
+# ── CropGuard AI — Multi-container stack ────────────────────────────────────
+#
+#   Services
+#   ├── api   — FastAPI ML backend           http://localhost:8000
+#   ├── ui    — Streamlit dashboard           http://localhost:8501
+#   └── locust— Load tester (optional)        http://localhost:8089
+#
+#   Quick start:
+#       docker compose up --build
+#
+#   Scale API to N replicas (load test):
+#       docker compose up --scale api=3 --build
+#
+#   Detached:
+#       docker compose up -d --build
+
+services:
+
+  # ── API ──────────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: cropguard-api:latest
+    container_name: cropguard_api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data        # persist uploaded & training data
+      - ./models:/app/models    # persist trained model files
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TF_CPP_MIN_LOG_LEVEL=2  # suppress TF info/warning logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    networks:
+      - cropguard_net
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+  # ── UI ───────────────────────────────────────────────────────────────────
+  ui:
+    build:
+      context: .
+      dockerfile: Dockerfile.ui
+    image: cropguard-ui:latest
+    container_name: cropguard_ui
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+    environment:
+      - API_URL=http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - cropguard_net
+
+  # ── Locust (start with: docker compose --profile loadtest up) ────────────
+  locust:
+    image: locustio/locust:2.20.0
+    container_name: cropguard_locust
+    profiles: ["loadtest"]
+    command: >
+      -f /locust/locustfile.py
+      --host=http://api:8000
+      --web-host=0.0.0.0
+    volumes:
+      - ./locust:/locust
+      - ./results:/results
+    ports:
+      - "8089:8089"
+    depends_on:
+      - api
+    networks:
+      - cropguard_net
+
+networks:
+  cropguard_net:
+    driver: bridge
+
+volumes:
+  model_data:
+  training_data:

@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+.eggs/
+dist/
+build/
+*.so
+
+# Virtual environments
+venv/
+.env
+.venv/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_meta
+
+# Data (don't commit raw images to git — use Git LFS or cloud storage)
+data/train/
+data/test/
+data/retrain/
+data/upload_log.json
+
+# Model weights (large files — use Git LFS or cloud storage)
+models/*.h5
+models/*.tf
+models/*.pkl
+models/training_log.csv
+
+# But DO commit metadata
+!models/training_history.json
+!models/eval_metrics.json
+
+# Locust / test output
+results/*.csv
+results/*.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.dockerignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# TF dataset cache
+~/tensorflow_datasets/
