@@ -8,9 +8,9 @@
 
 ## 📹 Video Demo
 
-[![CropGuard AI Demo](https://img.shields.io/badge/YouTube-Demo%20Video-red?logo=youtube)](https://www.youtube.com/watch?v=YOUR_VIDEO_ID)
+[![CropGuard AI Demo](https://img.shields.io/badge/YouTube-Demo%20Video-red?logo=youtube)](https://www.youtube.com/watch?v=PENDING)
 
-> 📌 Replace `YOUR_VIDEO_ID` with your actual YouTube video ID after recording.
+> 📌 Replace `PENDING` with your actual YouTube video ID after recording.
 
 ---
 
@@ -124,7 +124,7 @@ cropguard-ai/
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/YOUR_USERNAME/cropguard-ai.git
+git clone https://github.com/SLICKMAN-TYRUS/cropguard-ai.git
 cd cropguard-ai
 
 # 2. Create and activate virtual environment
@@ -158,7 +158,7 @@ Open:
 
 ```bash
 # 1. Clone and enter repo
-git clone https://github.com/YOUR_USERNAME/cropguard-ai.git
+git clone https://github.com/SLICKMAN-TYRUS/cropguard-ai.git
 cd cropguard-ai
 
 # 2. Place your trained model in models/
@@ -289,7 +289,7 @@ The notebook (`notebook/crop_disease_detector.ipynb`) is self-contained:
 Estimated training time: **~25 min on CPU / ~8 min on GPU (T4 on Colab)**
 
 Open in Colab:  
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/YOUR_USERNAME/cropguard-ai/blob/main/notebook/crop_disease_detector.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SLICKMAN-TYRUS/cropguard-ai/blob/main/notebook/crop_disease_detector.ipynb)
 
 ---
 
