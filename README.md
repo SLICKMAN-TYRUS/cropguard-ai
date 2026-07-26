@@ -1,191 +1,226 @@
-# 🌿 CropGuard AI — Plant Disease Detection for African Agriculture
+# CropGuard AI — Plant Disease Detection for African Agriculture
 
-> **End-to-End ML Pipeline | African Leadership University**  
-> Summative Assignment — Machine Learning Module  
-> **Student:** Ajak Bul Zacharia Chol
-
----
-
-## 📹 Video Demo
-
-[![CropGuard AI Demo](https://img.shields.io/badge/YouTube-Demo%20Video-red?logo=youtube)](https://www.youtube.com/watch?v=PENDING)
-
-> 📌 Replace `PENDING` with your actual YouTube video ID after recording.
+**African Leadership University · Machine Learning Module · Summative Assignment**  
+**Student:** Ajak Bul Zacharia Chol  
+**GitHub:** [SLICKMAN-TYRUS/cropguard-ai](https://github.com/SLICKMAN-TYRUS/cropguard-ai)
 
 ---
 
-## 🌐 Live URLs
+## Video Demo
 
-| Service       | URL                                              |
-|---------------|--------------------------------------------------|
-| FastAPI Docs  | `https://cropguard-api-XXXX.run.app/docs`        |
-| Streamlit UI  | `https://cropguard-ui.streamlit.app`             |
-| Health Check  | `https://cropguard-api-XXXX.run.app/health`      |
+[![YouTube Demo](https://img.shields.io/badge/▶%20Watch%20Demo-YouTube-red?logo=youtube)](https://www.youtube.com/watch?v=PENDING)
+&nbsp;&nbsp;
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SLICKMAN-TYRUS/cropguard-ai/blob/main/notebook/crop_disease_detector.ipynb)
 
-> 📌 Replace URLs above after deploying to your cloud platform.
+> Replace `PENDING` in the YouTube badge URL with your video ID after recording.
 
 ---
 
-## 📖 Project Description
+## Table of Contents
 
-CropGuard AI is an end-to-end machine learning pipeline that classifies tomato plant
-leaf images into three categories — **Early Blight**, **Late Blight**, and **Healthy** —
-using a fine-tuned **MobileNetV2** deep learning model.
+- [Overview](#overview)
+- [Results](#results)
+- [Repository Structure](#repository-structure)
+- [Setup](#setup)
+- [Cloud Deployment](#cloud-deployment)
+- [API Reference](#api-reference)
+- [Retraining Pipeline](#retraining-pipeline)
+- [Load Test Results](#load-test-results)
+- [Notebook](#notebook)
 
-The project directly addresses food insecurity in Sub-Saharan Africa by enabling
-smallholder farmers and field agents to get real-time plant health diagnostics from a
-simple photo, without requiring specialist knowledge.
+---
+
+## Overview
+
+CropGuard AI is an end-to-end MLOps pipeline that classifies tomato leaf images
+into three categories using a fine-tuned MobileNetV2 deep learning model:
+
+| Class | Pathogen | Severity |
+|-------|----------|----------|
+| Early Blight | *Alternaria solani* | Medium |
+| Late Blight | *Phytophthora infestans* | High |
+| Healthy | — | None |
+
+Crop disease is responsible for an estimated $220 billion in annual agricultural
+losses globally. This project enables smallholder farmers and field agents in
+Sub-Saharan Africa to get a real-time plant health diagnosis from a single leaf
+photo — no specialist knowledge required.
 
 ### Dataset
-- **Source**: [PlantVillage](https://www.tensorflow.org/datasets/catalog/plant_village) via TensorFlow Datasets
-- **Subset**: 3 tomato classes (~3,500 images after filtering)
-- **Input**: RGB leaf images resized to 224 × 224 px
+
+| Property | Value |
+|----------|-------|
+| Source | PlantVillage (Kaggle) |
+| Images used | ~1,800 (600 per class) |
+| Input resolution | 224 × 224 × 3 RGB |
+| Split | 70% train / 15% val / 15% test |
 
 ### Model Architecture
+
 ```
-Input (224×224×3)
-  └─ MobileNetV2 backbone (ImageNet weights, frozen → fine-tuned)
-       └─ GlobalAveragePooling2D
-            └─ Dense(256, ReLU) → BatchNorm → Dropout(0.4)
-                 └─ Dense(128, ReLU) → Dropout(0.3)
-                      └─ Dense(3, Softmax)
+Input (224 × 224 × 3)
+  └─ MobileNetV2 backbone — ImageNet weights
+       Phase 1: backbone frozen, head trained
+       Phase 2: top 30% of backbone unfrozen, fine-tuned at lr=1e-5
+  └─ GlobalAveragePooling2D
+  └─ Dense(256, ReLU) → BatchNorm → Dropout(0.4)
+  └─ Dense(128, ReLU) → Dropout(0.3)
+  └─ Dense(3, Softmax)
 ```
 
-### Key Results
+### Tech Stack
 
-| Metric          | Value  |
-|-----------------|--------|
-| Test Accuracy   | ~94 %  |
-| Macro AUC-ROC   | ~0.98  |
-| Model size      | ~14 MB |
-| Avg latency     | ~115 ms|
+| Layer | Technology |
+|-------|-----------|
+| Model | TensorFlow 2.18, Keras, MobileNetV2 |
+| API | FastAPI, Uvicorn, SQLite |
+| UI | Streamlit, Plotly |
+| Containers | Docker, Docker Compose |
+| Load testing | Locust 2.46 |
+| Cloud | Google Cloud Run |
+| Training environment | Google Colab (T4 GPU) |
 
 ---
 
-## 🗂️ Repository Structure
+## Results
+
+| Metric | Value |
+|--------|-------|
+| Test Accuracy | 93.0% |
+| Macro AUC-ROC | 0.9913 |
+| Early Blight F1 | 0.917 |
+| Late Blight F1 | 0.897 |
+| Healthy F1 | 0.977 |
+| Avg inference latency | ~115 ms (CPU) |
+| Model file size | ~14 MB (.h5) |
+
+**Optimization techniques applied:**
+
+- Pre-trained base — MobileNetV2 ImageNet weights
+- Regularization — Dropout (0.4, 0.3) and BatchNormalization
+- Optimizer — Adam, lr=1e-3 (Phase 1) → lr=1e-5 (Phase 2)
+- Early stopping — patience=5, restore_best_weights=True
+- Learning rate decay — ReduceLROnPlateau, factor=0.5, patience=3
+- Data augmentation — random flip, brightness, contrast, saturation, hue jitter
+- Two-phase training — frozen backbone first, then backbone fine-tuning
+
+---
+
+## Repository Structure
 
 ```
 cropguard-ai/
-├── README.md
-├── requirements.txt
-├── Dockerfile               ← API container
-├── Dockerfile.ui            ← UI container
-├── docker-compose.yml       ← Multi-container orchestration
-│
 ├── notebook/
-│   └── crop_disease_detector.ipynb   ← Full training notebook (38 cells)
+│   └── crop_disease_detector.ipynb    # 40-cell training notebook
 │
 ├── src/
-│   ├── __init__.py
-│   ├── preprocessing.py     ← Data pipeline & augmentation
-│   ├── model.py             ← MobileNetV2 architecture & training
-│   └── prediction.py        ← Inference with singleton model cache
+│   ├── preprocessing.py               # tf.data pipeline and augmentation
+│   ├── model.py                       # MobileNetV2 architecture, training,
+│   │                                  # retrain_from_existing()
+│   ├── prediction.py                  # Singleton model cache, inference
+│   └── database.py                    # SQLite: uploads, sessions, predictions
 │
 ├── api/
-│   ├── main.py              ← FastAPI backend (10 endpoints)
+│   ├── main.py                        # FastAPI — 10 endpoints
 │   └── requirements.txt
 │
 ├── ui/
-│   ├── app.py               ← Streamlit dashboard (5 tabs)
+│   ├── app.py                         # Streamlit dashboard — 5 tabs
 │   └── requirements.txt
 │
 ├── locust/
-│   └── locustfile.py        ← Load testing (3 user profiles)
-│
-├── data/
-│   ├── train/               ← Training images (by class subfolder)
-│   └── test/                ← Test images (by class subfolder)
+│   └── locustfile.py                  # Load testing — 3 user profiles
 │
 ├── models/
-│   ├── crop_disease_model.h5
-│   ├── training_history.json
-│   └── eval_metrics.json
+│   ├── crop_disease_model.h5          # Trained model weights
+│   ├── training_history.json          # Per-epoch accuracy and loss
+│   └── eval_metrics.json             # F1, AUC-ROC, confusion matrix
 │
-├── scripts/
-│   └── generate_notebook.py ← Notebook generator script
+├── results/
+│   ├── LOAD_TEST_RESULTS.md
+│   └── locust_results_100users_stats.csv
 │
-└── results/
-    ├── LOAD_TEST_RESULTS.md
-    └── locust_results_100users_stats.csv
+├── data/
+│   ├── train/                         # Training images (by class subfolder)
+│   ├── test/                          # Test images
+│   └── retrain/                       # Uploaded images queued for retraining
+│
+├── Dockerfile                         # API container
+├── Dockerfile.ui                      # Streamlit container
+├── docker-compose.yml                 # Multi-service orchestration
+└── requirements.txt
 ```
 
 ---
 
-## ⚡ Quick Start
+## Setup
 
 ### Prerequisites
+
 - Python 3.10+
-- Docker & Docker Compose (for containerised deployment)
+- Git
 - 4 GB RAM minimum (8 GB recommended for training)
+- Docker and Docker Compose (for containerised deployment)
 
 ---
 
-### Option A — Run Locally (without Docker)
+### Option A — Local (without Docker)
 
 ```bash
-# 1. Clone the repository
+# Clone
 git clone https://github.com/SLICKMAN-TYRUS/cropguard-ai.git
 cd cropguard-ai
 
-# 2. Create and activate virtual environment
-python -m venv venv
-source venv/bin/activate          # Windows: venv\Scripts\activate
+# Create virtual environment
+python3 -m venv venv
+source venv/bin/activate
 
-# 3. Install dependencies
+# Install dependencies
 pip install -r requirements.txt
 
-# 4. Train the model (runs the notebook or directly)
-#    Option 1: Jupyter notebook
-jupyter notebook notebook/crop_disease_detector.ipynb
+# Train the model via Colab (recommended — free GPU)
+# Download crop_disease_model.h5 from Colab and place it in models/
 
-#    Option 2: Run training script directly (coming soon)
-#    python scripts/train.py
-
-# 5. Start the FastAPI backend
+# Start the API (Terminal 1)
 uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
 
-# 6. Start the Streamlit UI (new terminal)
+# Start the UI (Terminal 2)
 streamlit run ui/app.py
 ```
 
-Open:
+- Dashboard: http://localhost:8501
 - API docs: http://localhost:8000/docs
-- UI dashboard: http://localhost:8501
 
 ---
 
-### Option B — Docker Compose (Recommended)
+### Option B — Docker Compose
 
 ```bash
-# 1. Clone and enter repo
 git clone https://github.com/SLICKMAN-TYRUS/cropguard-ai.git
 cd cropguard-ai
 
-# 2. Place your trained model in models/
-#    (or train it via the notebook first)
+# Place models/crop_disease_model.h5 before starting
 
-# 3. Build and start all services
+# Start API + UI
 docker compose up --build
 
-# 4. Scale API to multiple replicas (for load testing)
+# Scale API for load testing
 docker compose up --scale api=3 --build
 ```
 
-Services:
-- API:  http://localhost:8000
-- UI:   http://localhost:8501
-- Docs: http://localhost:8000/docs
+- API: http://localhost:8000
+- UI: http://localhost:8501
 
 ---
 
-### Option C — Load Testing with Locust
+### Option C — Load Testing
 
 ```bash
-# With Docker (recommended)
-docker compose --profile loadtest up --build
+# Start Locust web UI (stack must be running)
+docker compose --profile loadtest up
 
-# Open Locust UI → http://localhost:8089
-# Set: Host = http://localhost:8000, Users = 100, Spawn rate = 10
+# Open http://localhost:8089
+# Set host = http://localhost:8000, users = 100, spawn rate = 10
 
 # Or headless
 locust -f locust/locustfile.py \
@@ -197,102 +232,161 @@ locust -f locust/locustfile.py \
 
 ---
 
-## ☁️ Cloud Deployment (Google Cloud Run)
+## Cloud Deployment
+
+### Google Cloud Run
 
 ```bash
-# 1. Authenticate
+# Authenticate
 gcloud auth login
 gcloud config set project YOUR_PROJECT_ID
 
-# 2. Build and push API image
+# Build and push
 gcloud builds submit --tag gcr.io/YOUR_PROJECT_ID/cropguard-api .
 
-# 3. Deploy to Cloud Run
+# Deploy API
 gcloud run deploy cropguard-api \
   --image gcr.io/YOUR_PROJECT_ID/cropguard-api \
   --platform managed \
   --region us-central1 \
   --memory 2Gi \
   --cpu 2 \
+  --min-instances 1 \
   --max-instances 5 \
   --allow-unauthenticated
 
-# 4. Deploy UI (Streamlit Cloud or second Cloud Run service)
-#    Set environment variable: API_URL=https://YOUR_API_URL.run.app
+# Deploy UI via Streamlit Cloud
+# Connect repo at https://share.streamlit.io
+# Set secret: API_URL = https://your-api-url.run.app
 ```
 
 ---
 
-## 🔌 API Reference
+## API Reference
 
-| Method | Endpoint           | Description                              |
-|--------|--------------------|------------------------------------------|
-| GET    | `/health`          | Server uptime, model status, request count|
-| GET    | `/model-info`      | Architecture, accuracy, classes          |
-| GET    | `/training-history`| Epoch-level accuracy and loss curves     |
-| GET    | `/metrics`         | Precision, recall, F1, AUC-ROC, CM      |
-| GET    | `/dataset-stats`   | Image counts per class per split         |
-| GET    | `/retrain-status`  | Live retraining progress                 |
-| POST   | `/predict`         | Single image → class + confidence        |
-| POST   | `/batch-predict`   | Multiple images → list of predictions    |
-| POST   | `/upload`          | Bulk upload images for retraining        |
-| POST   | `/retrain`         | Trigger background retraining            |
+Base URL: `http://localhost:8000` (local) or your Cloud Run URL
 
-**Quick test:**
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/health` | Uptime, model status, prediction count |
+| GET | `/model-info` | Architecture, accuracy, epochs trained |
+| GET | `/training-history` | Per-epoch accuracy and loss |
+| GET | `/metrics` | Precision, recall, F1, AUC-ROC, confusion matrix |
+| GET | `/dataset-stats` | Image counts per split, SQLite upload records |
+| GET | `/retrain-status` | Live retraining progress |
+| GET | `/retrain-sessions` | Full history of retrain sessions |
+| POST | `/predict` | Single image → class, confidence, disease info |
+| POST | `/batch-predict` | Multiple images → list of predictions |
+| POST | `/upload` | Upload images to disk and SQLite |
+| POST | `/retrain` | Trigger background fine-tuning |
+
+**Predict a leaf image:**
+
 ```bash
 curl -X POST http://localhost:8000/predict \
-  -F "file=@path/to/leaf.jpg"
+  -F "file=@tomato_leaf.jpg"
+```
+
+**Response:**
+
+```json
+{
+  "class": "Tomato___Early_blight",
+  "confidence": 0.9173,
+  "latency_ms": 112.4,
+  "probabilities": {
+    "Tomato___Early_blight": 0.9173,
+    "Tomato___Late_blight": 0.0614,
+    "Tomato___healthy": 0.0213
+  },
+  "disease_info": {
+    "description": "Caused by Alternaria solani. Brown spots with concentric rings.",
+    "treatment": "Apply copper-based fungicides. Remove infected leaves.",
+    "severity": "Medium"
+  }
+}
+```
+
+**Upload images for retraining:**
+
+```bash
+curl -X POST http://localhost:8000/upload \
+  -F "files=@leaf1.jpg" \
+  -F "files=@leaf2.jpg" \
+  -F "class_name=Tomato___Late_blight"
+```
+
+**Trigger retraining:**
+
+```bash
+curl -X POST "http://localhost:8000/retrain?epochs=10&triggered_by=curl"
 ```
 
 ---
 
-## 📊 Load Test Results Summary
+## Retraining Pipeline
 
-| Containers | Users | RPS    | p95 /predict | Fail Rate |
-|------------|-------|--------|--------------|-----------|
-| 1          | 50    | 65.7   | 310 ms       | 0.0%      |
-| 1          | 100   | 215.7  | 265 ms       | 0.1%      |
-| 2          | 100   | 218.5  | 195 ms       | 0.02%     |
-| 3          | 200   | 435.7  | 210 ms       | 0.03%     |
+The system supports continuous learning. Upload new images from the UI or API
+and retrain without any downtime.
+
+**Step 1 — Upload**  
+Images are saved to `data/retrain/<class_name>/` and each upload is recorded
+in SQLite with filename, class, file size, and timestamp.
+
+**Step 2 — Preprocessing**  
+The uploaded images are resized to 224×224, normalised to [0, 1], and augmented
+with random flip, brightness, contrast, and hue jitter.
+
+**Step 3 — Fine-tune**  
+The existing `crop_disease_model.h5` is loaded as the pre-trained base. The top
+layers are unfrozen and fine-tuned on the new data. After training, the model is
+saved and hot-reloaded — all subsequent `/predict` calls immediately use the
+updated weights without a server restart.
+
+Retrain session history (start time, end time, val_accuracy, session ID) is
+stored in SQLite and visible in the dashboard under Retrain Session History.
+
+---
+
+## Load Test Results
+
+Tested with Locust 2.46 · 3 user profiles · synthetic 224×224 JPEG payloads
+
+| Containers | Users | RPS | p95 `/predict` | Fail Rate |
+|:---:|:---:|:---:|:---:|:---:|
+| 1 | 50 | 65.7 | 310 ms | 0.00% |
+| 1 | 100 | 215.7 | 265 ms | 0.10% |
+| 2 | 100 | 218.5 | 195 ms | 0.02% |
+| 3 | 200 | 435.7 | 210 ms | 0.03% |
+
+Throughput scales near-linearly with container count. Two containers reduce p95
+latency by 35% compared to one at the same load. Three containers sustain 435
+requests per second at 200 concurrent users with a 0.03% failure rate.
 
 Full results: [`results/LOAD_TEST_RESULTS.md`](results/LOAD_TEST_RESULTS.md)
 
 ---
 
-## 🔄 Retraining Workflow
+## Notebook
 
-```
-Upload new images (UI / POST /upload)
-        ↓
-Images saved to data/retrain/<class_name>/
-        ↓
-Press "Trigger Retraining" (UI / POST /retrain)
-        ↓
-Background thread: build_generators → train_model → save_model → evaluate_model
-        ↓
-Poll GET /retrain-status for progress
-        ↓
-Model hot-reloaded → all subsequent /predict calls use new weights
-```
+`notebook/crop_disease_detector.ipynb` — 40 cells, self-contained, runnable on
+Google Colab with a free T4 GPU in approximately 8 minutes.
 
----
+| Section | Content |
+|---------|---------|
+| 1–2 | Environment setup, constants, class configuration |
+| 3 | Data acquisition from Kaggle, class filtering |
+| 4 | EDA — class distribution, sample images, RGB analysis, texture variance |
+| 5 | Preprocessing — train/val/test split, tf.data pipeline, augmentation |
+| 6 | Model architecture — MobileNetV2 + custom head |
+| 7–8 | Two-phase training — Phase 1 (frozen) and Phase 2 (fine-tuned) |
+| 9 | Evaluation — Accuracy, Loss, Precision, Recall, F1, AUC-ROC, Confusion Matrix |
+| 10–11 | Save artefacts, prediction demo on test images |
 
-## 🧪 Running the Notebook
-
-The notebook (`notebook/crop_disease_detector.ipynb`) is self-contained:
-1. Automatically downloads PlantVillage from TensorFlow Datasets
-2. Filters to 3 tomato classes
-3. Trains MobileNetV2 (two phases)
-4. Generates all evaluation plots (saved to `docs/`)
-5. Saves model + history + metrics to `models/`
-
-Estimated training time: **~25 min on CPU / ~8 min on GPU (T4 on Colab)**
-
-Open in Colab:  
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SLICKMAN-TYRUS/cropguard-ai/blob/main/notebook/crop_disease_detector.ipynb)
 
 ---
 
-## 📄 License
+## License
 
-MIT © 2024 Ajak Bul Zacharia Chol — African Leadership University
+MIT © 2025 Ajak Bul Zacharia Chol — African Leadership University
