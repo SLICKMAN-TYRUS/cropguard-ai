@@ -218,9 +218,14 @@ def evaluate_model(
     y_prob = np.array(y_prob_all)
     y_pred = np.argmax(y_prob, axis=1)
 
+    # Pass labels explicitly so classification_report never mismatches
+    # target_names even when some classes are absent from the test slice
+    present_labels = sorted(set(y_true.tolist()) | set(y_pred.tolist()))
+    used_names = [class_names[i] for i in present_labels if i < len(class_names)]
     report = classification_report(
         y_true, y_pred,
-        target_names=class_names,
+        labels=present_labels,
+        target_names=used_names,
         output_dict=True,
         zero_division=0,
     )

@@ -493,15 +493,17 @@ with tab2:
                                 type=["jpg","jpeg","png"], key="predict_upload")
 
     if uploaded:
+        # Read bytes once so the file pointer is not shared between display and API call
+        img_bytes = uploaded.read()
+
         col_img, col_res = st.columns([1,1])
         with col_img:
-            st.image(Image.open(uploaded), caption=uploaded.name, use_column_width=True)
+            st.image(Image.open(io.BytesIO(img_bytes)), caption=uploaded.name, use_column_width=True)
 
         with col_res:
             with st.spinner("Running inference…"):
-                uploaded.seek(0)
                 resp = api_raw("post","/predict",
-                               files={"file":(uploaded.name,uploaded.read(),uploaded.type)})
+                               files={"file":(uploaded.name, io.BytesIO(img_bytes), uploaded.type)})
 
             if resp and resp.status_code == 200:
                 data  = resp.json()
@@ -876,19 +878,23 @@ with tab5:
             accept_multiple_files=True,
             key="bulk_upload",
         )
+        # Read all file bytes upfront to avoid pointer conflicts between preview and upload
+        uploaded_file_data = []
         if uploaded_files:
-            prev_cols = st.columns(min(5,len(uploaded_files)))
-            for i,f in enumerate(uploaded_files[:5]):
-                with prev_cols[i]:
-                    f.seek(0)
-                    st.image(Image.open(f), caption=f.name[:10], use_column_width=True)
+            for f in uploaded_files:
+                uploaded_file_data.append((f.name, f.read(), f.type))
 
-        if uploaded_files and st.button("⬆️ Upload & Save to Database", type="primary"):
-            with st.spinner(f"Uploading {len(uploaded_files)} image(s)…"):
+        if uploaded_file_data:
+            prev_cols = st.columns(min(5, len(uploaded_file_data)))
+            for i, (fname, fbytes, ftype) in enumerate(uploaded_file_data[:5]):
+                with prev_cols[i]:
+                    st.image(Image.open(io.BytesIO(fbytes)), caption=fname[:10], use_column_width=True)
+
+        if uploaded_file_data and st.button("⬆️ Upload & Save to Database", type="primary"):
+            with st.spinner(f"Uploading {len(uploaded_file_data)} image(s)…"):
                 payload = []
-                for f in uploaded_files:
-                    f.seek(0)
-                    payload.append(("files",(f.name,f.read(),f.type)))
+                for fname, fbytes, ftype in uploaded_file_data:
+                    payload.append(("files", (fname, io.BytesIO(fbytes), ftype)))
                 resp = api_raw("post","/upload",
                                files=payload, data={"class_name":selected_class})
             if resp and resp.status_code == 200:

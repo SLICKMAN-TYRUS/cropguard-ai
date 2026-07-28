@@ -84,13 +84,63 @@ def build_tf_datasets(
     return train_ds, val_ds, test_ds
 
 
+# All 3 class names the model was trained on — used to pad missing classes
+_ALL_CLASSES = [
+    "Tomato___Early_blight",
+    "Tomato___Late_blight",
+    "Tomato___healthy",
+]
+
+def _ensure_all_classes(retrain_dir: str) -> None:
+    """
+    Keras image_dataset_from_directory requires at least one image per class
+    subfolder. If the user only uploaded images for one class, we copy a single
+    placeholder image from the models/samples folder (or create a blank one)
+    into the missing class subfolders so the label shape stays (None, 3).
+    """
+    import shutil, os
+    retrain_path = Path(retrain_dir)
+    present = {p.name for p in retrain_path.iterdir() if p.is_dir()}
+    missing = [c for c in _ALL_CLASSES if c not in present]
+    if not missing:
+        return  # all classes already present
+
+    # Find any existing image to copy as a placeholder
+    sample_img = None
+    for p in retrain_path.rglob("*"):
+        if p.is_file() and p.suffix.lower() in {".jpg", ".jpeg", ".png"}:
+            sample_img = p
+            break
+
+    for cls in missing:
+        cls_dir = retrain_path / cls
+        cls_dir.mkdir(parents=True, exist_ok=True)
+        # Copy at least 2 images so the 80/20 val split has >=1 in each subset
+        for i in range(2):
+            dest = cls_dir / f"placeholder_{i}.png"
+            if not dest.exists():
+                if sample_img:
+                    shutil.copy(sample_img, dest)
+                else:
+                    from PIL import Image as PILImage
+                    PILImage.new("RGB", (224, 224), (86, 201, 154)).save(dest)
+        print(f"[Preprocess] Added placeholders for missing class: {cls}")
+
+
 def build_generators_from_directory(
     train_dir:  str,
-    test_dir:   str,
+    test_dir:   str = None,
     img_size:   Tuple[int, int] = IMG_SIZE,
     batch_size: int             = BATCH_SIZE,
 ) -> Tuple[tf.data.Dataset, tf.data.Dataset, tf.data.Dataset]:
-    """Build datasets from directory structure (used during retraining)."""
+    """Build datasets from directory structure (used during retraining).
+    Automatically pads missing class subfolders so label shape is always (None, 3).
+    If test_dir does not exist or is empty, the validation split is reused."""
+    import os
+
+    # Ensure all 3 class folders exist before Keras scans the directory
+    _ensure_all_classes(train_dir)
+
     train_ds = tf.keras.utils.image_dataset_from_directory(
         train_dir,
         validation_split=0.2,
@@ -109,13 +159,35 @@ def build_generators_from_directory(
         batch_size=batch_size,
         label_mode="categorical",
     )
-    test_ds = tf.keras.utils.image_dataset_from_directory(
-        test_dir,
-        image_size=img_size,
-        batch_size=batch_size,
-        label_mode="categorical",
-        shuffle=False,
+    # Use test_dir only if it exists and has images, otherwise reuse val split
+    img_suffixes = {".jpg", ".jpeg", ".png", ".bmp", ".gif"}
+    use_test_dir = (
+        test_dir
+        and os.path.isdir(test_dir)
+        and any(
+            Path(p).suffix.lower() in img_suffixes
+            for p in Path(test_dir).rglob("*")
+            if Path(p).is_file()
+        )
     )
+    if use_test_dir:
+        test_ds = tf.keras.utils.image_dataset_from_directory(
+            test_dir,
+            image_size=img_size,
+            batch_size=batch_size,
+            label_mode="categorical",
+            shuffle=False,
+        )
+    else:
+        test_ds = tf.keras.utils.image_dataset_from_directory(
+            train_dir,
+            validation_split=0.2,
+            subset="validation",
+            seed=42,
+            image_size=img_size,
+            batch_size=batch_size,
+            label_mode="categorical",
+        )
     # normalise
     norm = tf.keras.layers.Rescaling(1.0 / 255)
     train_ds = train_ds.map(lambda x, y: (norm(x), y))

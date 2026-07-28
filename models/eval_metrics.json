@@ -1,56 +1,32 @@
 {
-  "accuracy": 0.9296296296296296,
-  "auc_roc_macro": 0.9913424564262554,
+  "accuracy": 1.0,
+  "auc_roc_macro": NaN,
   "confusion_matrix": [
     [
-      88,
-      3,
-      0
-    ],
-    [
-      12,
-      78,
-      1
-    ],
-    [
-      1,
-      2,
-      85
+      2
     ]
   ],
   "class_report": {
-    "Early_blight": {
-      "precision": 0.8712871287128713,
-      "recall": 0.967032967032967,
-      "f1-score": 0.9166666666666666,
-      "support": 91.0
+    "Tomato___Early_blight": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 2.0
     },
-    "Late_blight": {
-      "precision": 0.9397590361445783,
-      "recall": 0.8571428571428571,
-      "f1-score": 0.896551724137931,
-      "support": 91.0
-    },
-    "healthy": {
-      "precision": 0.9883720930232558,
-      "recall": 0.9659090909090909,
-      "f1-score": 0.9770114942528736,
-      "support": 88.0
-    },
-    "accuracy": 0.9296296296296296,
+    "accuracy": 1.0,
     "macro avg": {
-      "precision": 0.9331394192935685,
-      "recall": 0.930028305028305,
-      "f1-score": 0.9300766283524903,
-      "support": 270.0
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 2.0
     },
     "weighted avg": {
-      "precision": 0.9325257229187942,
-      "recall": 0.9296296296296296,
-      "f1-score": 0.9295551298424861,
-      "support": 270.0
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 2.0
     }
   },
-  "evaluated_at": "2026-07-26T13:19:55.939738+00:00",
-  "n_samples": 270
+  "evaluated_at": "2026-07-28T23:32:41.057550",
+  "n_samples": 2
 }

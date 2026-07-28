@@ -290,7 +290,7 @@ def trigger_retrain(
         return JSONResponse(409, {"message": "Already running.", "state": RETRAIN_STATE})
 
     retrain_data = Path(train_dir)
-    if not retrain_data.exists() or not any(retrain_data.rglob("*.jpg")):
+    if not retrain_data.exists() or not any(f for f in retrain_data.rglob("*") if f.suffix.lower() in (".jpg", ".jpeg", ".png")):
         raise HTTPException(400, f"No images found in '{train_dir}'. Upload images first.")
 
     # Record session in SQLite
