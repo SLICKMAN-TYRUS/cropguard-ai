@@ -10,7 +10,8 @@ from pathlib import Path
 from datetime import datetime
 from typing import List, Dict, Optional
 
-DB_PATH = Path("data/cropguard.db")
+_DB_DIR = Path(__file__).parent.parent / "data"
+DB_PATH = _DB_DIR / "cropguard.db"
 
 
 # ─── Schema ───────────────────────────────────────────────────────────────────

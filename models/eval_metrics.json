@@ -1,6 +1,6 @@
 {
-  "accuracy": 1.0,
-  "auc_roc_macro": NaN,
+  "accuracy": 0.9296296296296296,
+  "auc_roc_macro": 0.9913424564262554,
   "confusion_matrix": [
     [
       2

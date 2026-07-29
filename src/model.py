@@ -26,7 +26,8 @@ from sklearn.metrics import (
 )
 
 # ─── Paths ────────────────────────────────────────────────────────────────────
-MODEL_DIR      = Path("models")
+_SRC_DIR       = Path(__file__).parent          # src/
+MODEL_DIR      = _SRC_DIR.parent / "models"    # project_root/models/
 MODEL_PATH     = MODEL_DIR / "crop_disease_model.h5"
 HISTORY_PATH   = MODEL_DIR / "training_history.json"
 METRICS_PATH   = MODEL_DIR / "eval_metrics.json"
