@@ -12,7 +12,6 @@
 &nbsp;&nbsp;
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SLICKMAN-TYRUS/cropguard-ai/blob/main/notebook/crop_disease_detector.ipynb)
 
-> Replace `PENDING` in the YouTube badge URL with your video ID after recording.
 
 ---
 
