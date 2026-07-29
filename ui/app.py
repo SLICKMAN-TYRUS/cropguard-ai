@@ -386,8 +386,10 @@ with tab1:
     k2.metric("📸 Predictions",  health.get("predictions_served",0))
     latency = health.get("avg_latency_ms")
     k3.metric("⚡ Avg Latency",  f"{latency:.0f} ms" if latency else "—")
-    k4.metric("🎯 Accuracy",     f"{metrics.get('accuracy',0)*100:.1f}%" if metrics else "—")
-    k5.metric("📐 AUC-ROC",      f"{metrics.get('auc_roc_macro',0):.4f}" if metrics else "—")
+    _acc = metrics.get('accuracy') if metrics else None
+    k4.metric("🎯 Accuracy", f"{_acc*100:.1f}%" if isinstance(_acc, float) else "—")
+    _auc = metrics.get('auc_roc_macro') if metrics else None
+    k5.metric("📐 AUC-ROC", f"{_auc:.4f}" if isinstance(_auc, float) else "—")
 
     st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
     col_l, col_r = st.columns(2)
@@ -774,8 +776,10 @@ with tab4:
             st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 
             m1,m2,m3 = st.columns(3)
-            m1.metric("Accuracy", f"{metrics.get('accuracy',0)*100:.2f}%")
-            m2.metric("AUC-ROC",  f"{metrics.get('auc_roc_macro',0):.4f}")
+            _acc2 = metrics.get('accuracy')
+            m1.metric("Accuracy", f"{_acc2*100:.2f}%" if isinstance(_acc2, float) else "—")
+            _auc2 = metrics.get('auc_roc_macro')
+            m2.metric("AUC-ROC", f"{_auc2:.4f}" if isinstance(_auc2, float) else "—")
             m3.metric("Samples",  str(metrics.get("n_samples","—")))
 
             cm = metrics.get("confusion_matrix")

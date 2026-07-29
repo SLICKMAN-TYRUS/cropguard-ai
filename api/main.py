@@ -30,6 +30,19 @@ from src.database import (
     log_prediction, get_prediction_stats,
 )
 
+# ─── JSON sanitizer (replaces nan/inf which crash Python's json encoder) ─────
+import math as _math
+
+def _sanitize(obj):
+    """Recursively replace nan/inf floats with None so FastAPI can serialize."""
+    if isinstance(obj, float):
+        return None if (_math.isnan(obj) or _math.isinf(obj)) else obj
+    if isinstance(obj, dict):
+        return {k: _sanitize(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_sanitize(i) for i in obj]
+    return obj
+
 # ─── App ──────────────────────────────────────────────────────────────────────
 app = FastAPI(
     title="CropGuard AI API",
@@ -80,7 +93,7 @@ def health_check():
 def model_info():
     metrics = load_metrics()
     history = load_history()
-    return {
+    return _sanitize({
         "model_path":        str(MODEL_PATH),
         "model_exists":      Path(MODEL_PATH).exists(),
         "model_loaded":      pred_module.model_loaded(),
@@ -94,7 +107,7 @@ def model_info():
         "auc_roc_macro":     metrics.get("auc_roc_macro"),
         "last_evaluated_at": metrics.get("evaluated_at"),
         "retrain_history":   get_retrain_sessions(limit=5),
-    }
+    })
 
 
 # ─── Prediction ───────────────────────────────────────────────────────────────
@@ -156,7 +169,7 @@ def training_history():
 @app.get("/metrics", tags=["Training"])
 def get_metrics():
     m = load_metrics()
-    return m if m else {"message": "No metrics yet — train the model first."}
+    return _sanitize(m) if m else {"message": "No metrics yet — train the model first."}
 
 
 @app.get("/retrain-status", tags=["Training"])

@@ -1,14 +1,14 @@
 # CropGuard AI — Plant Disease Detection for African Agriculture
 
 **African Leadership University · Machine Learning Module · Summative Assignment**  
-**Student:** Ajak Bul Zacharia Chol  
+**Student:** Ajak Bul Zachariah Chol  
 **GitHub:** [SLICKMAN-TYRUS/cropguard-ai](https://github.com/SLICKMAN-TYRUS/cropguard-ai)
 
 ---
 
 ## Video Demo
 
-[![YouTube Demo](https://img.shields.io/badge/▶%20Watch%20Demo-YouTube-red?logo=youtube)](https://www.youtube.com/watch?v=PENDING)
+[![YouTube Demo](https://img.shields.io/badge/▶%20Watch%20Demo-YouTube-red?logo=youtube)](https://youtu.be/biDDqvrF2F8)
 &nbsp;&nbsp;
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/SLICKMAN-TYRUS/cropguard-ai/blob/main/notebook/crop_disease_detector.ipynb)
 

@@ -30,7 +30,7 @@
 | GET /health        | 4210  | 0     | 12       | 25       | 40       | 70.2  |
 | **Aggregated**     | 12943 | 14    | 28       | 265      | 415      | **215.7**|
 
-> ⚠️ Failures began appearing at 100 users (queue saturation, 2 Uvicorn workers).
+>  Failures began appearing at 100 users (queue saturation, 2 Uvicorn workers).
 
 ---
 
